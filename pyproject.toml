@@ -1,0 +1,32 @@
+[project]
+name = "auto-press-f"
+version = "0.3.2"
+description = "Windows helper that auto-presses a key to skip Genshin Impact dialogue and cutscenes"
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["genshin-impact", "auto-clicker", "keyboard", "windows", "tkinter"]
+classifiers = [
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "customtkinter>=6.0.0",
+]
+
+# gui-scripts (instead of scripts) generates a pythonw-based launcher, so neither a
+# double-click nor `uvx` leaves a black console window behind the UI. Diagnostics go to
+# auto_press_f.log instead.
+[project.gui-scripts]
+auto-press-f = "main:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+# The project uses a flat layout (three modules at the repo root), so py-modules is
+# declared explicitly -- setuptools' auto-discovery fails on several top-level modules.
+[tool.setuptools]
+py-modules = ["main", "auto_press_f", "elevate"]

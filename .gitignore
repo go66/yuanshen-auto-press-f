@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# uv virtualenv
+.venv/
+
+# Local runtime state (machine specific: window handle, badge position, ...)
+config.json
+*.log
+*.log.1
+
+# Editor / local tooling
+.vscode/
+.workbuddy/
