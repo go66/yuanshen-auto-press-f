@@ -597,31 +597,32 @@ class App:
     def _card(self, title):
         c = ctk.CTkFrame(self.root, fg_color=CARD, corner_radius=14,
                          border_width=1, border_color=EDGE)
-        c.pack(fill="x", padx=16, pady=(0, 10))
+        c.pack(fill="x", padx=16, pady=(0, 8))
         ctk.CTkLabel(c, text=title.upper(), font=F(10, "bold"),
                      text_color=DIM, anchor="w")\
-            .pack(fill="x", padx=16, pady=(11, 2))
+            .pack(fill="x", padx=12, pady=(9, 1))
         return c
 
-    def _grid(self, parent, uniform, cols=3):
+    def _grid(self, parent, uniform, cols=3, weights=None):
         g = ctk.CTkFrame(parent, fg_color="transparent")
-        g.pack(fill="x", padx=14, pady=(2, 12))
+        g.pack(fill="x", padx=12, pady=(3, 9))
         for i in range(cols):
-            g.columnconfigure(i, weight=1, uniform=uniform)
+            g.columnconfigure(i, weight=(weights[i] if weights else 10),
+                              uniform=uniform)
         return g
 
     @staticmethod
     def _cell(grid, col, row, text, span=1):
         wrap = ctk.CTkFrame(grid, fg_color="transparent")
         wrap.grid(row=row, column=col, columnspan=span, sticky="ew",
-                  padx=(0 if col == 0 else 10, 0), pady=(0, 8))
+                  padx=(0 if col == 0 else 8, 0), pady=(0, 7))
         ctk.CTkLabel(wrap, text=text, font=F(11), text_color=MUTED,
-                     anchor="w").pack(fill="x", pady=(0, 4))
+                     anchor="w").pack(fill="x", pady=(0, 3))
         return wrap
 
     def _build(self):
         head = ctk.CTkFrame(self.root, fg_color="transparent")
-        head.pack(fill="x", padx=18, pady=(16, 14))
+        head.pack(fill="x", padx=16, pady=(12, 8))
         box = ctk.CTkFrame(head, fg_color="transparent")
         box.pack(side="left")
         ctk.CTkLabel(box, text="F-Key Auto Presser", font=F(16, "bold"),
@@ -643,19 +644,19 @@ class App:
         # Fixed width + pack_propagate(False): a long window title would otherwise widen
         # the whole window and clip everything on the right. The title itself is also
         # truncated (see _fmt).
-        holder = ctk.CTkFrame(c, fg_color=FIELD, corner_radius=9, height=36,
-                              width=500)
-        holder.pack(fill="x", padx=14, pady=(4, 8))
+        holder = ctk.CTkFrame(c, fg_color=FIELD, corner_radius=9, height=32,
+                              width=540)
+        holder.pack(fill="x", padx=12, pady=(2, 6))
         holder.pack_propagate(False)
         ctk.CTkLabel(holder, textvariable=self.win_var, font=F(12),
                      text_color=FG, anchor="w")\
             .pack(side="left", fill="y", padx=11)
 
         row = ctk.CTkFrame(c, fg_color="transparent")
-        row.pack(fill="x", padx=14)
+        row.pack(fill="x", padx=12)
         row.columnconfigure(0, weight=1, uniform="b")
         row.columnconfigure(1, weight=1, uniform="b")
-        secondary = dict(height=32, corner_radius=9, fg_color=FIELD,
+        secondary = dict(height=30, corner_radius=8, fg_color=FIELD,
                          hover_color=FIELD_HI, text_color=FG, font=F(12))
         ctk.CTkButton(row, text="Select window", command=self.open_picker,
                       **secondary).grid(row=0, column=0, sticky="ew",
@@ -668,7 +669,7 @@ class App:
                       switch_width=36, switch_height=20,
                       button_color="#f2f5f9", button_hover_color="#ffffff")
         sw = ctk.CTkFrame(c, fg_color="transparent")
-        sw.pack(fill="x", padx=14, pady=(12, 13))
+        sw.pack(fill="x", padx=12, pady=(9, 10))
         sw.columnconfigure(0, weight=1, uniform="s")
         sw.columnconfigure(1, weight=1, uniform="s")
         ctk.CTkSwitch(sw, text="Foreground only", variable=self.only_fg,
@@ -679,10 +680,10 @@ class App:
             .grid(row=0, column=1, sticky="w")
 
         c = self._card("Timing")
-        # Two columns, not three: a single number field (- value +) already needs about
-        # 220 logical pixels, so three of them would push the card past the window width
-        # and clip the right edge.
-        g = self._grid(c, "t", cols=2)
+        # Three columns over two rows: five fields packed this way cost one row less
+        # than the old 2-column stack, which is what pushed the window off the bottom
+        # of the screen on high-DPI displays.
+        g = self._grid(c, "t", cols=3)
         self.interval = NumberField(
             self._cell(g, 0, 0, "Interval (ms)"), 250, step=10, lo=40,
             hi=5000, on_change=self.push_cfg)
@@ -692,21 +693,23 @@ class App:
             on_change=self.push_cfg)
         self.jitter.pack(fill="x")
         self.hold = NumberField(
-            self._cell(g, 0, 1, "Hold (ms)"), 60, step=5, lo=5, hi=500,
+            self._cell(g, 2, 0, "Hold (ms)"), 60, step=5, lo=5, hi=500,
             on_change=self.push_cfg)
         self.hold.pack(fill="x")
         self.hold_jitter = NumberField(
-            self._cell(g, 1, 1, "Hold jitter (%)"), 30, step=5, lo=0,
+            self._cell(g, 0, 1, "Hold jitter (%)"), 30, step=5, lo=0,
             hi=100, on_change=self.push_cfg)
         self.hold_jitter.pack(fill="x")
         self.start_delay = NumberField(
-            self._cell(g, 0, 2, "Start delay (s)"), 2.0, step=0.5, lo=0,
+            self._cell(g, 1, 1, "Start delay (s)"), 2.0, step=0.5, lo=0,
             hi=10, decimals=1, on_change=self.push_cfg)
         self.start_delay.pack(fill="x")
 
         c = self._card("Keys")
-        g = self._grid(c, "k", cols=2)
-        om = dict(height=34, corner_radius=9, fg_color=FIELD,
+        # Delivery method sits on the same row as the two key pickers; its column is
+        # given extra weight because the labels ("SendInput + scancode") are longer.
+        g = self._grid(c, "k", cols=3, weights=(10, 10, 13))
+        om = dict(height=32, corner_radius=9, fg_color=FIELD,
                   button_color=FIELD, button_hover_color=FIELD_HI,
                   text_color=FG, dropdown_fg_color=CARD,
                   dropdown_hover_color=FIELD_HI, dropdown_text_color=FG,
@@ -718,25 +721,19 @@ class App:
         ctk.CTkOptionMenu(self._cell(g, 1, 0, "Press key"),
                           values=PRESS_KEY_CHOICES,
                           variable=self.press_key, **om).pack(fill="x")
-
-        # On its own row so it lines up with the card padding (a cell spanning two grid
-        # columns ends up slightly narrower than the fields above it).
-        dg = ctk.CTkFrame(c, fg_color="transparent")
-        dg.pack(fill="x", padx=14, pady=(0, 12))
-        ctk.CTkLabel(dg, text="Delivery method", font=F(11), text_color=MUTED,
-                     anchor="w").pack(fill="x", pady=(0, 4))
-        ctk.CTkOptionMenu(dg, values=list(METHODS.values()),
+        ctk.CTkOptionMenu(self._cell(g, 2, 0, "Delivery method"),
+                          values=list(METHODS.values()),
                           variable=self.method, **om).pack(fill="x")
 
-        self.btn = ctk.CTkButton(self.root, text="Start", height=44,
-                                 corner_radius=11, fg_color=ACCENT,
+        self.btn = ctk.CTkButton(self.root, text="Start", height=38,
+                                 corner_radius=10, fg_color=ACCENT,
                                  hover_color=ACCENT_HI, text_color="#ffffff",
                                  font=F(14, "bold"), command=self.toggle)
-        self.btn.pack(fill="x", padx=18, pady=(4, 10))
+        self.btn.pack(fill="x", padx=16, pady=(2, 6))
 
         ctk.CTkLabel(self.root, textvariable=self.status, font=F(11),
                      text_color=MUTED, anchor="w")\
-            .pack(fill="x", padx=20)
+            .pack(fill="x", padx=18)
 
         # A plain tk.Label instead of CTkLabel: CTkLabel mixes its own scaling into
         # wraplength and still requested the full sentence width (it once stretched the
@@ -745,31 +742,57 @@ class App:
         tip_font = (FONT, -max(11, int(round(10.5 * self._scale))))
         self.tip = tk.Label(
             self.root, bg=BG, fg=MUTED, anchor="w", justify="left",
-            font=tip_font, wraplength=int(round(512 * self._scale)),
+            font=tip_font, wraplength=int(round(540 * self._scale)),
             text="Keep the interval at 150 ms or more and leave some jitter on. "
                  "If the game runs as administrator, this tool must too — "
                  "otherwise Windows drops its input silently.")
-        self.tip.pack(fill="x", padx=20, pady=(7, 18))
+        self.tip.pack(fill="x", padx=18, pady=(6, 12))
 
     def _apply_size(self):
-        """Let the window take its natural content size.
+        """Let the window take its natural content size, then make sure it fits.
 
         Do not compute the size by hand: CTk's geometry() applies its own DPI scaling and
         is additionally clamped by the min/max values that resizable(False, False) sets,
         so hand-computed numbers easily disagree with reality (the result is a clipped
-        right edge or a window that is too small). All that is needed here: give the hint
-        text a DPI-scaled wrap width, then clear CTk's default geometry with the native
-        wm_geometry("") so Tk lays the window out at its requested size, and finally lock
-        it against resizing.
+        right edge or a window that is too small).
         """
-        try:
-            self.tip.configure(wraplength=int(round(512 * self._scale)))
-        except tk.TclError:
-            pass
+        self._wrap_tip(540)
         self.root.update_idletasks()
         self.root.wm_geometry("")
         self.root.update_idletasks()
+
+        # High-DPI screens have less usable room than the layout asks for: shorten the
+        # hint first, and drop it entirely rather than let the bottom edge run off screen.
+        avail_h = self.root.winfo_screenheight() - 64
+        if self.root.winfo_reqheight() > avail_h:
+            self.tip.configure(
+                text="Keep the interval at 150 ms or more; if the game runs as "
+                     "administrator, this tool must too.")
+            self._wrap_tip(540)
+            self.root.update_idletasks()
+        if self.root.winfo_reqheight() > avail_h:
+            self.tip.pack_forget()
+            self.root.update_idletasks()
+
+        self.root.wm_geometry("")
+        self.root.update_idletasks()
         self.root.resizable(False, False)
+        self._keep_on_screen()
+
+    def _wrap_tip(self, logical_px):
+        try:
+            self.tip.configure(wraplength=int(round(logical_px * self._scale)))
+        except tk.TclError:
+            pass
+
+    def _keep_on_screen(self):
+        """Nudge the window back inside the work area if the frame landed partly off."""
+        w, h = self.root.winfo_width(), self.root.winfo_height()
+        sw, sh = self.root.winfo_screenwidth(), self.root.winfo_screenheight()
+        x = min(max(0, self.root.winfo_x()), max(0, sw - w))
+        y = min(max(0, self.root.winfo_y()), max(0, sh - h - 48))
+        if (x, y) != (self.root.winfo_x(), self.root.winfo_y()):
+            self.root.wm_geometry("+%d+%d" % (x, y))
 
     @staticmethod
     def _fmt(hwnd, title):
